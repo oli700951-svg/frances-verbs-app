@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: french-verbs-trainer
+    env: python
+    region: frankfurt
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: postgres
+          name: french-verbs-db
+          envVarKey: DATABASE_URL
+      - key: SECRET_KEY
+        generateValue: true
+
+databases:
+  - name: french-verbs-db
+    databaseName: frenchverbs
+    user: admin
+    plan: free
