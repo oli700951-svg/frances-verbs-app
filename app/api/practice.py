@@ -1,26 +1,41 @@
-# app/api/practice.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app import models, schemas, database
 import random
+from fastapi.security import OAuth2PasswordBearer
+from app.auth import SECRET_KEY, ALGORITHM
+from jose import jwt, JWTError
 
 router = APIRouter(prefix="/practice", tags=["practice"])
 
 sujetos = ["je", "tu", "il/elle", "nous", "vous", "ils/elles"]
 
+# Simulación de autenticación con JWT
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+def get_current_user_id(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        user_id = int(payload.get("sub"))
+        return user_id
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Token inválido")
+
 @router.post("/individual")
 def practice_individual(
     request: schemas.IndividualPracticeRequest,
     db: Session = Depends(database.get_db),
-    current_user_id: int = 1  # TODO: autenticación real
+    current_user_id: int = Depends(get_current_user_id)
 ):
     verb = db.query(models.Verb).filter(models.Verb.id == request.verb_id).first()
     if not verb:
         raise HTTPException(status_code=404, detail="Verbo no encontrado")
 
     # Verificar presente
-    presente_answers = [request.presente.je, request.presente.tu, request.presente.il,
-                       request.presente.nous, request.presente.vous, request.presente.ils]
+    presente_answers = [
+        request.presente.je, request.presente.tu, request.presente.il,
+        request.presente.nous, request.presente.vous, request.presente.ils
+    ]
     presente_correct = [
         verb.presente_je, verb.presente_tu, verb.presente_il,
         verb.presente_nous, verb.presente_vous, verb.presente_ils
@@ -28,8 +43,7 @@ def practice_individual(
     presente_score = sum(1 for u, c in zip(presente_answers, presente_correct) if u.strip().lower() == c.lower())
 
     # Verificar passé
-    passe_correct = verb.passe_compose
-    passe_score = 1 if request.passe.je.strip().lower() == passe_correct.lower() else 0
+    passe_score = 1 if request.passe.je.strip().lower() == verb.passe_compose.lower() else 0
 
     total_correct = presente_score + passe_score
     total_questions = 7
@@ -52,16 +66,20 @@ def practice_individual(
 @router.get("/exam")
 def get_exam(db: Session = Depends(database.get_db)):
     verbs = db.query(models.Verb).all()
+    if not verbs:
+        raise HTTPException(status_code=404, detail="No hay verbos disponibles")
     questions = []
-    for _ in range(10):
+    for _ in range(min(10, len(verbs))):
         verb = random.choice(verbs)
         if random.choice([True, False]):
             # Presente
             i = random.randint(0, 5)
             questions.append({
                 "question": f"Conjuga '{verb.infinitive}' en presente con '{sujetos[i]}':",
-                "answer": [verb.presente_je, verb.presente_tu, verb.presente_il,
-                          verb.presente_nous, verb.presente_vous, verb.presente_ils][i],
+                "answer": [
+                    verb.presente_je, verb.presente_tu, verb.presente_il,
+                    verb.presente_nous, verb.presente_vous, verb.presente_ils
+                ][i],
                 "verb_id": verb.id,
                 "type": "presente"
             })
