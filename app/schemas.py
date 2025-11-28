@@ -38,6 +38,9 @@ class VerbOut(BaseModel):
     class Config:
         orm_mode = True
 
+# Alias por compatibilidad
+VerbResponse = VerbOut
+
 # =====================
 # Progreso de usuario
 # =====================
@@ -93,4 +96,5 @@ class IndividualPracticeRequest(BaseModel):
     verb_id: int
     presente: PresenteAnswers
     passe: PasseAnswers
+
 
