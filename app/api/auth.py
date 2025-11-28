@@ -1,30 +1,37 @@
-# app/api/auth.py
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from app import schemas, models, auth, database
+from passlib.context import CryptContext
+from datetime import datetime, timedelta
+import jwt
+from app import models
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+SECRET_KEY = "TU_SECRETO_SUPER_SEGURO"  # Mejor usar variable de entorno
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-@router.post("/signup")
-def signup(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
-    db_user = auth.get_user(db, user.username)
-    if db_user:
-        raise HTTPException(status_code=400, detail="Usuario ya existe")
-    hashed_pw = auth.get_password_hash(user.password)
-    new_user = models.User(
-        username=user.username,
-        email=user.email,
-        hashed_password=hashed_pw
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return {"msg": "Usuario creado"}
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-@router.post("/login", response_model=schemas.Token)
-def login(user: schemas.UserLogin, db: Session = Depends(database.get_db)):
-    db_user = auth.authenticate_user(db, user.username, user.password)
-    if not db_user:
-        raise HTTPException(status_code=401, detail="Credenciales inválidas")
-    access_token = auth.create_access_token({"sub": str(db_user.id)})
-    return {"access_token": access_token, "token_type": "bearer"}
+def get_password_hash(password: str):
+    return pwd_context.hash(password)
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_user(db, username: str):
+    return db.query(models.User).filter(models.User.username == username).first()
+
+def authenticate_user(db, username: str, password: str):
+    user = get_user(db, username)
+    if not user:
+        return False
+    if not verify_password(password, user.hashed_password):
+        return False
+    return user
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
