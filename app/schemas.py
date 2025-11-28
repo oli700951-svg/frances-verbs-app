@@ -1,52 +1,61 @@
-# app/schemas.py
 from pydantic import BaseModel
-from typing import List, Optional
 
 class UserCreate(BaseModel):
     username: str
     email: str
     password: str
 
-class UserLogin(BaseModel):
+class UserOut(BaseModel):
+    id: int
     username: str
-    password: str
+    email: str
+    is_admin: bool
+    class Config:
+        orm_mode = True
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+class VerbCreate(BaseModel):
+    spanish: str
+    infinitive: str
+    presente_je: str
+    presente_tu: str
+    presente_il: str
+    presente_nous: str
+    presente_vous: str
+    presente_ils: str
+    passe_compose: str
 
-class VerbResponse(BaseModel):
+class VerbOut(BaseModel):
     id: int
     spanish: str
     infinitive: str
-    presente: List[str]
-    passe_compose: str
-
     class Config:
-        from_attributes = True
+        orm_mode = True
 
-class PresenteAnswer(BaseModel):
-    je: str
-    tu: str
-    il: str
-    nous: str
-    vous: str
-    ils: str
-
-class PasseAnswer(BaseModel):
-    je: str
-
-class IndividualPracticeRequest(BaseModel):
+class UserProgressCreate(BaseModel):
+    user_id: int
     verb_id: int
-    presente: PresenteAnswer
-    passe: PasseAnswer
+    total_attempts: int
+    correct_attempts: int
 
-class ExamQuestion(BaseModel):
-    question: str
-    answer: str
+class UserProgressOut(BaseModel):
+    id: int
+    user_id: int
     verb_id: int
-    type: str  # "presente" or "passe"
+    total_attempts: int
+    correct_attempts: int
+    class Config:
+        orm_mode = True
 
-class ExamSubmission(BaseModel):
-    answers: List[str]
-    questions: List[ExamQuestion]
+class ExamResultCreate(BaseModel):
+    user_id: int
+    score: int
+    total: int
+
+class ExamResultOut(BaseModel):
+    id: int
+    user_id: int
+    score: int
+    total: int
+    timestamp: str
+    class Config:
+        orm_mode = True
