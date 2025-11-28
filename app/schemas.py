@@ -1,6 +1,8 @@
 from pydantic import BaseModel
 
+# =====================
 # Auth
+# =====================
 class UserCreate(BaseModel):
     username: str
     email: str
@@ -14,7 +16,9 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+# =====================
 # Verbos
+# =====================
 class VerbCreate(BaseModel):
     spanish: str
     infinitive: str
@@ -30,10 +34,13 @@ class VerbOut(BaseModel):
     id: int
     spanish: str
     infinitive: str
+
     class Config:
         orm_mode = True
 
+# =====================
 # Progreso de usuario
+# =====================
 class UserProgressCreate(BaseModel):
     user_id: int
     verb_id: int
@@ -46,10 +53,13 @@ class UserProgressOut(BaseModel):
     verb_id: int
     total_attempts: int
     correct_attempts: int
+
     class Config:
         orm_mode = True
 
+# =====================
 # Resultado de examen
+# =====================
 class ExamResultCreate(BaseModel):
     user_id: int
     score: int
@@ -61,5 +71,26 @@ class ExamResultOut(BaseModel):
     score: int
     total: int
     timestamp: str
+
     class Config:
         orm_mode = True
+
+# =====================
+# Práctica individual
+# =====================
+class PresenteAnswers(BaseModel):
+    je: str
+    tu: str
+    il: str
+    nous: str
+    vous: str
+    ils: str
+
+class PasseAnswers(BaseModel):
+    je: str
+
+class IndividualPracticeRequest(BaseModel):
+    verb_id: int
+    presente: PresenteAnswers
+    passe: PasseAnswers
+
