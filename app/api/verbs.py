@@ -1,20 +1,19 @@
-# app/api/verbs.py
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from app import models, schemas, database
+from app.database import get_db
+from app.models import Verb
+from app.schemas import VerbCreate, VerbOut
 
 router = APIRouter(prefix="/verbs", tags=["verbs"])
 
-@router.get("/", response_model=list[schemas.VerbResponse])
-def get_verbs(db: Session = Depends(database.get_db)):
-    verbs = db.query(models.Verb).all()
-    result = []
-    for v in verbs:
-        result.append(schemas.VerbResponse(
-            id=v.id,
-            spanish=v.spanish,
-            infinitive=v.infinitive,
-            presente=[v.presente_je, v.presente_tu, v.presente_il, v.presente_nous, v.presente_vous, v.presente_ils],
-            passe_compose=v.passe_compose
-        ))
-    return result
+@router.post("/", response_model=VerbOut)
+def create_verb(verb: VerbCreate, db: Session = Depends(get_db)):
+    db_verb = Verb(**verb.dict())
+    db.add(db_verb)
+    db.commit()
+    db.refresh(db_verb)
+    return db_verb
+
+@router.get("/", response_model=list[VerbOut])
+def list_verbs(db: Session = Depends(get_db)):
+    return db.query(Verb).all()
