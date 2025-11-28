@@ -8,10 +8,12 @@ services:
     envVars:
       - key: SECRET_KEY
         generateValue: true
-    # ¡No necesitas DATABASE_URL aquí! Render lo inyecta automáticamente.
+      - key: DATABASE_URL
+        fromDatabase:
+          name: french-verbs-db
+          property: connectionString
 
 databases:
   - name: french-verbs-db
-    databaseName: frenchverbs
-    user: admin
     plan: free
+
