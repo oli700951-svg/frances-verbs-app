@@ -1,5 +1,4 @@
-
-   from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.database import Base
@@ -43,3 +42,4 @@ class ExamResult(Base):
     score = Column(Integer)
     total = Column(Integer)
     timestamp = Column(DateTime, default=datetime.utcnow)
+
