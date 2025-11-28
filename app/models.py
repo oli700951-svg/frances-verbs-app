@@ -1,10 +1,8 @@
-# app/models.py
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
-from sqlalchemy.ext.declarative import declarative_base
+
+   from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from datetime import datetime
-
-Base = declarative_base()
+from app.database import Base
 
 class User(Base):
     __tablename__ = "users"
@@ -34,6 +32,9 @@ class UserProgress(Base):
     verb_id = Column(Integer, ForeignKey("verbs.id"))
     total_attempts = Column(Integer, default=0)
     correct_attempts = Column(Integer, default=0)
+
+    user = relationship("User", backref="progress")
+    verb = relationship("Verb")
 
 class ExamResult(Base):
     __tablename__ = "exam_results"
